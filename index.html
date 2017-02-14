@@ -27,7 +27,7 @@
                 var Milestones = React.createClass({
                 	render: function(){
                 		var milestoneNodes = this.props.data.map(function(milestone, index){
-                			return (<tr><td>{10**(index+1)}</td><td>{milestone}</td></tr>)
+                			return (<tr><td>{10**(index)}</td><td>{milestone}</td></tr>)
                 		})
                 		return (
                 			<table className="table">
@@ -56,7 +56,11 @@
 						//console.log(curState);
 						var curprob = curState.rolldata.datasets[0].data[curState.target]/curState.rolls;
 						curState.curprob = curprob;
-						if (Math.log10(curState.rolls) === Math.floor(Math.log10(curState.rolls))){
+						var r = curState.rolls;
+						while (r % 10 == 0) {
+						    r /= 10;
+						}
+						if (r === 1){
 							curState.milestones.push(curprob);
 							console.log(curState.milestones)
 						}
