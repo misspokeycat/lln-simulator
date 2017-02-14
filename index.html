@@ -62,7 +62,10 @@
 						}
 						if (r === 1){
 							curState.milestones.push(curprob);
-							console.log(curState.milestones)
+							curState.rollprob.datasets[1].data.push(curprob);
+							curState.rollprob.datasets[0].data.push(1/6);
+							curState.rollprob.labels.push(10**curState.milestones.length);
+							curState.rollprob.datasets[2].data.push(Math.abs(1/6-curprob));
 						}
 						this.setState(curState);
 						//Calculates probability of outcome of number 5.
@@ -109,6 +112,29 @@
 										data:[0,0,0,0,0,0]}
 								]
 							},
+							rollprob: {
+								labels: [0],
+								datasets: [
+									{
+										backgroundColor: 'rgba(151,187,205, 0.3)',
+										radius: 0,
+										label: "Actual probability (p)",
+										data: []
+									},
+									{
+										backgroundColor: 'rgba(220,220, 0, 0.3)',
+										radius: 0,
+										label: "Experimental probability (f/n)",
+										data: []
+									},
+									{
+										backgroundColor: 'rgba(220, 0, 0, 0.3)',
+										radius: 0,
+										label: "Difference (|p-f/n|)",
+										data: []
+									}
+								]
+							},
 							roller: null,
 							rolls: 0,
 							curprob: 0,
@@ -122,6 +148,16 @@
 							legend: {
 								display: false
 							},
+							scales: {
+					        	yAxes: [{
+					            display: true,
+					            ticks: {
+					            	beginAtZero: true   // minimum value will be 0.
+						            }
+						        }]
+						    }
+						}
+						var linechartops = {
 							scales: {
 					        	yAxes: [{
 					            display: true,
@@ -149,6 +185,9 @@
 									</div>
 								</div>
 								<div className="row">
+								<div className="col-md-6">
+									<Line data={this.state.rollprob} options={linechartops}/>
+								</div>
 									<div className="col-xs-6">
 									   <h4 style={{display:"inline"}}>Target Number</h4> <input type="number" className="form-control" min="1" max="6" value={this.state.target} onChange={this.setTarget}></input>
 									</div>
