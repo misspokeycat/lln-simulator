@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>LLN SIM.js</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.18.1/babel.min.js"></script>
+		<script src="https://unpkg.com/react@15/dist/react.js"></script>
+		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.js"></script>
+		<script type="text/javascript" src="/react-chartjs-2.js"></script>
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<div id="main"></div>
+			<script type="text/babel">
+			    var Bar = reactChartjs2.Bar;
+                var Line = reactChartjs2.Line;
+                var Doughnut = reactChartjs2.Doughnut;
+                reactChartjs2.defaults.global.colors = [ '#803690', '#00ADF9', '#DCDCDC', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'];
+                
+                function sleep(ms) {
+				  return new Promise(resolve => setTimeout(resolve, ms));
+				}
+                
+                var Milestones = React.createClass({
+                	render: function(){
+                		var milestoneNodes = this.props.data.map(function(milestone, index){
+                			return (<tr><td>{10**(index+1)}</td><td>{milestone}</td></tr>)
+                		})
+                		return (
+                			<table className="table">
+                				<thead>
+                					<tr>
+                						<th>Trial Number</th>
+                						<th>Experimental probability</th>
+                					</tr>
+                				</thead>
+                				<tbody>
+                					{milestoneNodes}
+                				</tbody>
+                			</table>
+                		)
+                	}
+                })
+                
+				var App = React.createClass({
+					simulateRoll: async function(count){
+						var curState = this.state;
+						//Simulate a d6 roll
+						var die = 6;
+						var randInt = Math.floor(Math.random() * die) + 1;
+						curState.rolldata.datasets[0].data[randInt-1]++;
+						curState.rolls++;
+						//console.log(curState);
+						var curprob = curState.rolldata.datasets[0].data[curState.target]/curState.rolls;
+						curState.curprob = curprob;
+						if (Math.log10(curState.rolls) === Math.floor(Math.log10(curState.rolls))){
+							curState.milestones.push(curprob);
+							console.log(curState.milestones)
+						}
+						this.setState(curState);
+						//Calculates probability of outcome of number 5.
+					},
+					simulateRollsContFn: function(){
+						for(var i=0; i<9; i++){
+							this.simulateRoll();
+						}
+					},
+					simulate1mRolls: function(){
+						for(var i=0; i<1000000; i++){
+							this.simulateRoll();
+						}
+					},
+					simulateRollCont: function(){
+						var contRoller = setInterval(
+							this.simulateRollsContFn
+						, 1);
+						this.setState({roller: contRoller});
+					},
+					componentDidMount: function(){
+						
+					},
+					setTarget: function(event){
+						//Reset simulation and target number
+						clearInterval(this.state.roller || 0);
+						var newState = this.getInitialState();
+						newState.target = event.target.value
+						this.setState(newState)
+					},
+					stopRolls: function(){
+						console.log("stopping")
+						var roller = this.state.roller;
+						clearInterval(this.state.roller || 0);
+						this.setState({roller: null});
+					},
+					getInitialState: function(){
+						return {
+							rolldata:{
+								labels: ["1","2","3","4","5","6"],
+								datasets: [
+									{
+										backgroundColor: ['#97BBCD', '#DCDCDC', '#F7464A', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'],
+										data:[0,0,0,0,0,0]}
+								]
+							},
+							roller: null,
+							rolls: 0,
+							curprob: 0,
+							target: 5,
+							milestones: []
+						}
+					},
+					render: function(){
+						var barchartops = {
+							responsive: true,
+							legend: {
+								display: false
+							},
+							scales: {
+					        	yAxes: [{
+					            display: true,
+					            ticks: {
+					            	beginAtZero: true   // minimum value will be 0.
+						            }
+						        }]
+						    }
+						}
+						return (
+							<div className="container">
+								<h1>LLN Simulation</h1>
+								<h3><i>Proving f/n → p</i></h3>
+								<h4>Currently simulated {this.state.rolls || 0} rolls (n)</h4>
+								<div className="row">
+									<div className="col-sm-6">
+										<h2>Rolls per number</h2>
+										<Bar data={this.state.rolldata} options={barchartops} />
+									</div>
+									<div className="col-sm-6">
+										<h2>Probability of rolling {this.state.target}</h2>
+										<h5><i>Actual probability (p): 0.16666</i></h5>
+										<h5><i>Current experimental probability (f/n): {this.state.curprob.toFixed(5)}</i></h5>
+										<Milestones data={this.state.milestones || []} />
+									</div>
+								</div>
+								<div className="row">
+									<div className="col-xs-6">
+									   <h4 style={{display:"inline"}}>Target Number</h4> <input type="number" className="form-control" min="1" max="6" value={this.state.target} onChange={this.setTarget}></input>
+									</div>
+									<div className="col-xs-6" style={{marginTop: "18px"}}>
+										<btn className="btn btn-primary" onClick={this.simulateRoll}>Roll 1 time</btn>
+										<btn className="btn btn-primary" onClick={this.simulate1mRolls}>Roll 1 million times</btn>
+										{ this.state.roller ? <btn className="btn btn-danger" onClick={this.stopRolls}>Stop rolling</btn> : <btn className="btn btn-primary" onClick={this.simulateRollCont}>Continuously roll</btn>}
+									</div>
+								</div>
+							</div>
+						)
+					}
+				});
+				
+				ReactDOM.render(
+					<App />,
+					$("#main")[0]
+				);
+			</script>
+		      <div class="container navbar-fixed-bottom">
+		        <p class="text-muted">Made with <3 by Luke D'Alfonso &copy;2017 </p>
+		      </div>
+	</body>
+</html>

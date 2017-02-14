@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>LLN SIM.js</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.18.1/babel.min.js"></script>
+		<script src="https://unpkg.com/react@15/dist/react.js"></script>
+		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.js"></script>
+		<!--script type="text/javascript" src="https://unpkg.com/react-chartjs-2@2.0.0/dist/react-chartjs-2.js"></script -->
+		<script type="text/javascript" src="/react-chartjs-2.js"></script>
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<div id="main"></div>
+			<script type="text/babel">
+			    var Bar = reactChartjs2.Bar;
+                var Line = reactChartjs2.Line;
+                var Doughnut = reactChartjs2.Doughnut;
+                reactChartjs2.defaults.global.colors = [ '#803690', '#00ADF9', '#DCDCDC', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'];
+                
+                function sleep(ms) {
+				  return new Promise(resolve => setTimeout(resolve, ms));
+				}
+                
+				var App = React.createClass({
+					simulateRoll: async function(count){
+						var curState = this.state;
+						//Simulate a d6 roll
+						var die = 6;
+						var randInt = Math.floor(Math.random() * die) + 1;
+						curState.rolldata.datasets[0].data[randInt-1]++;
+						//console.log(curState);
+						//Calculates probability of outcome of number 5.
+						var curprob = curState.rolldata.datasets[0].data[4]/curState.rollprob.labels.length;
+						curState.curacc = ((1/6-curprob)/(1/6));
+						curState.rollprob.datasets[1].data.push(curprob);
+						curState.rollprob.datasets[0].data.push(1/6);
+						curState.rollprob.labels.push(curState.rollprob.labels.length);
+						curState.rollprob.datasets[2].data.push(Math.abs(1/6-curprob));
+						this.setState(curState);
+					},
+					simulate10000Rolls: function(){
+						for(var i=0; i<10000; i++){
+							this.simulateRoll();
+						}
+					},
+					simulateRollCont: function(){
+						setInterval(this.simulateRoll, 1)
+					},
+					componentDidMount: function(){
+						
+					},
+					getInitialState: function(){
+						return {
+							rolldata:{
+								labels: ["1","2","3","4","5","6"],
+								datasets: [
+									{
+										backgroundColor: ['#97BBCD', '#DCDCDC', '#F7464A', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'],
+										data:[0,0,0,0,0,0]}
+								]
+							},
+							rollprob: {
+								labels: [0],
+								datasets: [
+									{
+										backgroundColor: 'rgba(151,187,205, 0.3)',
+										radius: 0,
+										label: "Actual probability (p)",
+										data: []
+									},
+									{
+										backgroundColor: 'rgba(220,220, 0, 0.3)',
+										radius: 0,
+										label: "Experimental probability (f/n)",
+										data: []
+									},
+									{
+										backgroundColor: 'rgba(220, 0, 0, 0.3)',
+										radius: 0,
+										label: "Difference (|p-f/n|)",
+										data: []
+									}
+								]
+							}
+						}
+					},
+					render: function(){
+						var barchartops = {
+							responsive: true,
+							scales: {
+					        	yAxes: [{
+					            display: true,
+					            ticks: {
+					            	beginAtZero: true   // minimum value will be 0.
+						            }
+						        }]
+						    }
+						}
+						var linechartops = {
+							responsive: true,
+							animation: false,
+							scales: {
+					        	yAxes: [{
+					            display: true,
+					            ticks: {
+					            	beginAtZero: true   // minimum value will be 0.
+						            }
+						        }],
+						        xAxes: [{
+						        	display: false
+						        }]
+						    }
+						}
+						return (
+							<div className="container">
+								<h1>LLN Simulation</h1>
+								<h3><i>Proving f/n → p</i></h3>
+								<h4>Currently simulated {this.state.rollprob.labels.length - 1 || 0} rolls (n), experimental probability within {this.state.curacc}%</h4>
+								<div className="row">
+									<div className="col-sm-6">
+										<h2>Rolls per number</h2>
+										<Bar data={this.state.rolldata} options={barchartops} />
+									</div>
+									<div className="col-sm-6">
+										<h2>Probability of outcome #5</h2>
+										<Line data={this.state.rollprob} options={linechartops} />
+									</div>
+									<btn className="btn btn-primary" onClick={this.simulateRoll}>Roll 1 time</btn>
+									<btn className="btn btn-primary" onClick={this.simulate10000Rolls}>Roll 10000 times</btn>
+									<btn className="btn btn-primary" onClick={this.simulateRollCont}>Continouously roll</btn>
+								</div>
+							</div>
+						)
+					}
+				});
+				
+				ReactDOM.render(
+					<App />,
+					$("#main")[0]
+				);
+			</script>
+	</body>
+</html>
