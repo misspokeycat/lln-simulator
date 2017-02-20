@@ -54,7 +54,7 @@
 						curState.rolldata.datasets[0].data[randInt-1]++;
 						curState.rolls++;
 						//console.log(curState);
-						var curprob = curState.rolldata.datasets[0].data[curState.target]/curState.rolls;
+						var curprob = curState.rolldata.datasets[0].data[curState.target-1]/curState.rolls;
 						curState.curprob = curprob;
 						var r = curState.rolls;
 						while (r % 10 == 0) {
