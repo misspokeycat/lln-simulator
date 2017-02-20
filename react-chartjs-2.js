@@ -1811,7 +1811,7 @@ var ChartComponent = function (_React$Component) {
           options = _props2.options;
 
 
-      this.memoizeDataProps();
+      //this.memoizeDataProps();
 
       if (!this.chart_instance) return;
 
